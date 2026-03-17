@@ -1,0 +1,18 @@
+const express = require('express')
+const authRouter = require('./routes/auth.routes');
+const accountRouter = require('./routes/account.routes');
+const cookieParser = require('cookie-parser')
+const authRouterMiddle = require('./middleware/auth.js')
+
+const app = express();
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.get("/", (req, res) => {
+    res.send("Ledger Service is up and running")
+})
+app.use("/api/auth",authRouter);
+app.use("/api/account",authRouterMiddle,accountRouter);
+
+module.exports= app
