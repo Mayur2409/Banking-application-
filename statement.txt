@@ -1,0 +1,8 @@
+--------Transaction statement -----
+
+1. type: TRANSFER
+   from : 1000000002
+   to   : 1000000001
+   Amount   : 30
+   Date     : 3/18/2026, 12:21:23 PM
+

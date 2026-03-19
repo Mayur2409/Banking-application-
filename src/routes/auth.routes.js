@@ -6,6 +6,7 @@ console.log("you are in the auth module")
 router.post("/registration", userController.userRegistration);
 router.post('/login',userController.login);
 router.post("/", userController.getUser);
+router.post("/verifyOtp", userController.verifyOtp);
 // router.get("/", userController.getUser);
 
 

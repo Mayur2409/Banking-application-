@@ -10,9 +10,9 @@ function connectDB(){
     })
     .catch((error)=>{
         console.log("Server is not connected to db");
-        process.exit(1)
+        // process.exit(1)
+        process.kill();
     })
-
 }
 
 module.exports = connectDB

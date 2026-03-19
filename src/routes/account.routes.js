@@ -10,6 +10,9 @@ router.get('/getBalance/:accountNo',AccountController.getAccountBalance);
 router.post('/withdraw',AccountController.withdrawMoney);
 router.patch('/deposit',AccountController.depositMoney);
 router.patch('/transfer-Money',AccountController.transferMoney);
+router.get('/history', AccountController.getAccountHistory);
+router.post('/GetStatement', AccountController.generateStatement),
+
 
 
 
