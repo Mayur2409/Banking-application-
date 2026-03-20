@@ -5,6 +5,7 @@ const { sendEmailFile } = require("../services/email_services.js")
 const dotenv = require('dotenv').config()
 const file = require("fs");
 const path = require("path");
+const pdfGen = require("../services/generatePdf.js");
 
 const createFolder = async ()=>{
     
@@ -22,12 +23,12 @@ const createFolder = async ()=>{
 const createAccount = async function createAccount(req, res) {
 
     const data = req.body;
-    const { id, email } = req.user;
+    const { userID, email } = req.user;
 
     console.log("Data from request : ", data)
-    console.log("Data from request Body : ", id, "  ", email);
+    console.log("Data from request Body : ", userID, "  ", email);
 
-    const user = await userModel.findOne({ _id: id, email: email })
+    const user = await userModel.findOne({ _id: userID, email: email })
     console.log(user)
 
     try {
@@ -43,7 +44,7 @@ const createAccount = async function createAccount(req, res) {
         const t1 = await transactionModel.create({
             transactionId: "TXN" + Date.now(),
             type: 'DEPOSIT',
-            fromAccount: account1._id,
+            fromAccount: account1.accountNo
         })
         console.log(t1);
         res.status(200).json({ account1 })
@@ -74,7 +75,7 @@ const getMyAccount = async function getMyAccountData(req, res) {
     console.log(user)
     try {
 
-        const accountDtl = await accountModel.findOne({ user: user.id })
+        const accountDtl = await accountModel.findOne({ user: user.userID })
         console.log("AC: ", accountDtl)
         res.status(200).json({ accountDtl })
 
@@ -176,15 +177,17 @@ const depositMoney = async function (req, res) {
 }
 
 const transferMoney = async function (req, res) {
-    const { senderNo, receiverNo, amount } = req.body;
-    console.log("Data received by url : ", senderNo, receiverNo, amount)
+    const { receiverNo, amount } = req.body;
+    const {userID} = req.user;
+    console.log("Data received by url : ", receiverNo, amount)
     if (!amount || amount <= 0) {
         return res.status(400).json({ message: "enter correct amount." });
     }
 
     try {
 
-        const senderAccount = await accountModel.findOne({ accountNo: senderNo });
+        const senderAccount = await accountModel.findOne({ user: userID });
+        console.log("sender Account info : ",senderAccount)
         const receiverAccount = await accountModel.findOne({ accountNo: receiverNo });
 
         if (!senderAccount)
@@ -236,45 +239,37 @@ const getAccountHistory = async function (req,res){
 
 
 const generateStatement = async function(req,res){
-    const accountNo = req.body.accountNo;
-    console.log(accountNo)
+    const acNo = req.body.accountNo
+    const account = await accountModel.findOne({accountNo:acNo});
+    console.log("Account info :",account)
+
+    const {userID} = req.user;
+    console.log("user oid : ",userID);
+
+    const user1 = await userModel.findOne({_id:userID});
+    console.log("user: ",user1);
+
     const transactions = await transactionModel.find({
         $or:[
-            {fromAccount : accountNo},
-            {toAccount : accountNo}
+            {fromAccount : account.accountNo},
+            {toAccount : account.accountNo}
         ]
     }).sort({createdAt : -1})
 
-    console.log(transactions);
+    // console.log(transactions);
 
-    let content = "--------Transaction statement -----\n\n";
-    
-    transactions.forEach((txn , index) => {
-        content +=`${index +1}. type: ${txn.type}\n`;
-        if(txn.type === "DEPOSIT" || txn.type === "WITHDRAW"){
-            content += `   from : ${txn.fromAccount}\n`
-        }
-        if(txn.type === "TRANSFER"){
-            content += `   from     : ${txn.fromAccount}\n`
-            content += `   to       : ${txn.toAccount}\n`
-        }
-        content += `   Amount   : ${txn.amount}\n`
-        content += `   Date     : ${txn.createdAt.toLocaleString()}\n\n`;
-    });
     const folderPath = await createFolder();
-    const filePath = path.join(folderPath, `transaction_${Date.now()}.txt`)
-    file.writeFile(filePath ,content, (error) =>{
-        if(error){
-            console.log("Error writing file: ", error)
-        }else{
-            console.log("File created successfully");
-            return res.status(200).json({message: "statement is sending in emails"})
-        }
-    })
-    const account = await accountModel.findOne({accountNo});
-    sendEmailFile(account.email,filePath)
+    const filePath = path.join(folderPath, `transaction_${Date.now()}.pdf`)
+    pdfGen(transactions,filePath,user1, account)
 
-    console.log(content);
+
+    sendEmailFile(user1.email,filePath)
+
+
+    // 4. Delete file (optional)
+        // fs.unlinkSync(filePath);
+    return res.status(200).json({message: "statement is sending in emails"})
+
 }
 
 
@@ -290,3 +285,29 @@ module.exports = {
     getAccountHistory,
     generateStatement
 };
+
+
+
+
+    // let content = "--------Transaction statement -----\n\n";
+    
+    // transactions.forEach((txn , index) => {
+    //     content +=`${index +1}. type: ${txn.type}\n`;
+    //     if(txn.type === "DEPOSIT" || txn.type === "WITHDRAW"){
+    //         content += `   from : ${txn.fromAccount}\n`
+    //     }
+    //     if(txn.type === "TRANSFER"){
+    //         content += `   from     : ${txn.fromAccount}\n`
+    //         content += `   to       : ${txn.toAccount}\n`
+    //     }
+    //     content += `   Amount   : ${txn.amount}\n`
+    //     content += `   Date     : ${txn.createdAt.toLocaleString()}\n\n`;
+    // });
+    //     file.writeFile(filePath ,content, (error) =>{
+    //     if(error){
+    //         console.log("Error writing file: ", error)
+    //     }else{
+    //         console.log("File created successfully");
+          
+    //     }
+    // })

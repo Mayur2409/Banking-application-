@@ -5,6 +5,7 @@ const dotenv = require('dotenv').config();
 const otp_model = require('../models/otp_model.js');
 const emailId = process.env.EMAIL_ID ;
 const password = process.env.EMAIL_PASS;
+const path = require('path')
 
 const transport = mailer.createTransport({
     host:"smtp.gmail.com",
@@ -69,13 +70,18 @@ const sendEmailFile = async function (emailId,filePath){
         text : `statement data`,
         attachments:[
             {
-                filename: "statement_File.txt",
+                filename: path.basename(filePath),
                 path:filePath
             }
         ]
     }
+
+    try{
+        const t = await transport.sendMail(mailOption);
+        console.log(t);
+    }catch(error){
+        throw error;
+    }
 }
-
-
 
 module.exports ={ sendEmail, sendEmailOtp,sendEmailFile}

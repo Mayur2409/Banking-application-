@@ -11,7 +11,7 @@ module.exports = function(req,res,next){
   
     try{
         const decoded = verifyToken(token);
-
+        console.log("user Decoded values : ", decoded);
         req.user = decoded;
 
         next();

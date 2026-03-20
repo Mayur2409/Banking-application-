@@ -17,7 +17,9 @@ function decryption(encryptedData){
     const decipher = crypto.createDecipheriv(algo,key,iv);
     let decrypt = decipher.update(encryptedData, 'hex','utf8');
     decrypt = decipher.final('utf8');
+    console.log(decrypt)
     return JSON.parse(decrypt);
 }
 
+// decryption("f19d42b4090d79fae3f156d77fe45dbd")
 module.exports = {encryption , decryption}
